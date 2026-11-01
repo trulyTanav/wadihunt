@@ -53,9 +53,15 @@ jobs:
       - name: Build Debug APK
         run: |
           cd client/android
-          ./gradlew assembleDebug --no-daemon --stacktrace
-          echo "Listing all generated APK files:"
-          find /home/runner/work/ -name "*.apk" || find . -name "*.apk"
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Save Build Log to Summary
+        if: always()
+        run: |
+          echo "## Build Log Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 client/android/build.log >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -64,5 +70,5 @@ jobs:
           name: wadihunt-debug-apk
           path: |
             client/android/app/build/outputs/apk/debug/*.apk
-            **/build/outputs/apk/**/*.apk
+            client/android/app/build/outputs/**/*.apk
             **/*.apk
