@@ -2,12 +2,20 @@
   "name": "wadihunt-app",
   "version": "1.0.0",
   "description": "WadiHunt - Real-world GPS Manhunt Android App inspired by ShadowHunt",
+  "type": "module",
+  "main": "server/src/server.js",
   "scripts": {
+    "start": "node server/src/server.js",
     "server": "node server/src/server.js",
     "client": "npm --prefix client run dev -- --host",
     "build:client": "npm --prefix client run build",
     "sync:android": "npm --prefix client run build && npx --prefix client cap sync",
     "open:android": "npx --prefix client cap open android"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   },
   "keywords": [
     "manhunt",

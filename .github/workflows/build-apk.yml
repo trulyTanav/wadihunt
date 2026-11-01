@@ -35,13 +35,13 @@ jobs:
           cd client
           npm run build
 
+      - name: Make Gradlew Executable
+        run: chmod +x client/android/gradlew
+
       - name: Sync Capacitor Android
         run: |
           cd client
           npx cap sync android
-
-      - name: Make Gradlew Executable
-        run: chmod +x client/android/gradlew
 
       - name: Build Debug APK
         run: |
