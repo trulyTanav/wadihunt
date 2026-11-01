@@ -53,11 +53,18 @@ jobs:
       - name: Build Debug APK
         run: |
           cd client/android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee gradle-build.log || (echo "### ❌ GRADLE BUILD FAILURE" >> $GITHUB_STEP_SUMMARY && echo '```' >> $GITHUB_STEP_SUMMARY && tail -n 120 gradle-build.log >> $GITHUB_STEP_SUMMARY && echo '```' >> $GITHUB_STEP_SUMMARY && exit 1)
+
+      - name: Upload Build Log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gradle-build-log
+          path: client/android/gradle-build.log
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
           name: wadihunt-debug-apk
           path: client/android/app/build/outputs/apk/debug/*.apk
