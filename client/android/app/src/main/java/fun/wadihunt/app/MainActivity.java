@@ -3,13 +3,11 @@ package fun.wadihunt.app;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
 
         try {
@@ -19,6 +17,8 @@ public class MainActivity extends BridgeActivity {
                 settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
                 settings.setDomStorageEnabled(true);
                 settings.setDatabaseEnabled(true);
+                settings.setAllowFileAccess(true);
+                settings.setAllowContentAccess(true);
                 WebView.setWebContentsDebuggingEnabled(true);
             }
         } catch (Exception ignored) {}

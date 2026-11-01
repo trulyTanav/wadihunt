@@ -58,6 +58,15 @@ export default function App() {
     };
   }, [roomState?.state]);
 
+  // Dismiss native splash screen as soon as React renders
+  useEffect(() => {
+    try {
+      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+        SplashScreen.hide().catch(() => {});
+      }).catch(() => {});
+    } catch (e) {}
+  }, []);
+
   // Initialize Socket and GPS
   useEffect(() => {
     const socket = socketService.connect();
