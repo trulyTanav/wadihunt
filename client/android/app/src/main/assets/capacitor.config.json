@@ -1,0 +1,22 @@
+{
+	"appId": "fun.wadihunt.app",
+	"appName": "WadiHunt",
+	"webDir": "dist",
+	"backgroundColor": "#0B0914",
+	"server": {
+		"cleartext": true,
+		"androidScheme": "https"
+	},
+	"android": {},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 1500,
+			"backgroundColor": "#0B0914",
+			"showSpinner": false
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#0B0914"
+		}
+	}
+}

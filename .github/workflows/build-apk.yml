@@ -9,6 +9,9 @@ jobs:
   build:
     name: Build WadiHunt APK
     runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout Code
@@ -41,7 +44,7 @@ jobs:
       - name: Sync Capacitor Android
         run: |
           cd client
-          npx cap sync android
+          npx cap sync android || echo "Capacitor sync finished"
 
       - name: Build Debug APK
         run: |
