@@ -173,8 +173,8 @@ class GeoService {
         },
         {
           enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 4000
+          maximumAge: 2000,
+          timeout: 10000
         }
       );
 
@@ -185,21 +185,11 @@ class GeoService {
         },
         (err) => {
           console.warn('GPS continuous watch notice:', err.message);
-          // If timed out, restart watch after 1.5s so browser doesn't sleep
-          if (err.code === 3 && !this.isSimulated) {
-            setTimeout(() => {
-              if (this.watchId && !this.isSimulated) {
-                navigator.geolocation.clearWatch(this.watchId);
-                this.watchId = null;
-                this.startTracking();
-              }
-            }, 1500);
-          }
         },
         {
           enableHighAccuracy: true,
-          maximumAge: 0, // CRITICAL: NO CACHE for zero-delay realtime location
-          timeout: 7000
+          maximumAge: 2500,
+          timeout: 15000
         }
       );
     }
@@ -212,7 +202,6 @@ class GeoService {
     if (typeof window === 'undefined') return;
 
     if ('DeviceOrientationEvent' in window) {
-      // iOS 13+ permission check if required
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission().catch(() => {});
       }
@@ -220,19 +209,17 @@ class GeoService {
       this.orientationListener = (e) => {
         let heading = null;
         if (e.webkitCompassHeading != null) {
-          // iOS Safari
           heading = e.webkitCompassHeading;
         } else if (e.alpha != null) {
-          // Android Chrome / WebView
           heading = (360 - e.alpha) % 360;
         }
 
         if (heading != null && !this.isSimulated) {
           const rounded = Math.round(heading);
           const now = Date.now();
-          // Rate limit orientation updates: only notify if changed by >= 3 deg or >= 120ms passed
+          // Rate limit orientation updates: only update if changed by >= 6 deg and >= 300ms passed to preserve mobile FPS
           const diff = Math.abs(rounded - this.lastHeading);
-          if ((diff >= 3 || diff <= -3) && now - this.lastHeadingNotifyTime >= 120) {
+          if (diff >= 6 && now - this.lastHeadingNotifyTime >= 300) {
             this.lastHeading = rounded;
             this.lastHeadingNotifyTime = now;
             this.currentPosition.heading = rounded;
