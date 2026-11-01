@@ -53,7 +53,15 @@ jobs:
       - name: Build Debug APK
         run: |
           cd client/android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "=========================================="
+            echo "           EXACT GRADLE ERROR             "
+            echo "=========================================="
+            grep -B 2 -A 25 -i "what went wrong" /tmp/gradle_output.txt || tail -n 50 /tmp/gradle_output.txt
+            exit $EXIT_CODE
+          fi
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
