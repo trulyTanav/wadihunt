@@ -10,7 +10,7 @@
   "android": {
     "buildOptions": {
       "keystorePath": "",
-      "releaseType": "AAB"
+      "releaseType": "APK"
     }
   },
   "plugins": {

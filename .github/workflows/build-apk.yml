@@ -53,12 +53,16 @@ jobs:
       - name: Build Debug APK
         run: |
           cd client/android
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
-          echo "Generated APK files:"
-          find . -name "*.apk"
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "Listing all generated APK files:"
+          find /home/runner/work/ -name "*.apk" || find . -name "*.apk"
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: wadihunt-debug-apk
-          path: '**/*.apk'
+          path: |
+            client/android/app/build/outputs/apk/debug/*.apk
+            **/build/outputs/apk/**/*.apk
+            **/*.apk
