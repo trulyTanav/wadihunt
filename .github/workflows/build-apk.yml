@@ -28,9 +28,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Accept Android Licenses
+      - name: Accept Android Licenses and Install SDK 36
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || yes | sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" || true
 
       - name: Install Client Dependencies
         run: |
