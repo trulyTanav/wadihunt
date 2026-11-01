@@ -242,8 +242,8 @@ export default function TacticalMap({
           canSee = true;
         }
       } else {
-        // I am a Shadow
-        if (player.role === 'SHADOW') {
+        // I am a Runner (Shadow): Show fellow runners AND live GPS of Gateboys!
+        if (player.role === 'SHADOW' || player.role === 'HUNTER') {
           canSee = true;
         }
       }
@@ -352,7 +352,8 @@ export default function TacticalMap({
           canSee = true;
         }
       } else {
-        if (data.role === 'SHADOW') {
+        // I am a Runner (Shadow): Update position for fellow runners AND Gateboys!
+        if (data.role === 'SHADOW' || data.role === 'HUNTER') {
           canSee = true;
         }
       }
@@ -596,12 +597,13 @@ export default function TacticalMap({
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* Floating Tactical Map Controls (Right Side) */}
+      {/* Floating Tactical Map Controls (Right Side - Vertically Centered, Never Clashing) */}
       <div
         style={{
           position: 'absolute',
-          right: '16px',
-          bottom: '160px',
+          right: '12px',
+          top: '50%',
+          transform: 'translateY(-50%)',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -613,6 +615,10 @@ export default function TacticalMap({
           onClick={handleRecenter}
           className="btn btn-icon cut-sm"
           style={{
+            width: '38px',
+            height: '38px',
+            minHeight: '38px',
+            padding: 0,
             background: autoFollow ? 'var(--p-600)' : 'rgba(20, 14, 38, 0.92)',
             border: autoFollow ? '1px solid var(--p-300)' : '1px solid var(--line)',
             color: autoFollow ? '#fff' : 'var(--p-300)',
@@ -621,7 +627,7 @@ export default function TacticalMap({
           }}
           title={autoFollow ? 'Locked to your position' : 'Click to center on me'}
         >
-          <Crosshair size={20} className={autoFollow ? 'pulse-animation' : ''} />
+          <Crosshair size={18} className={autoFollow ? 'pulse-animation' : ''} />
         </button>
 
         {/* Toggle Map Layer (Dark / Satellite Recon) */}
@@ -629,6 +635,10 @@ export default function TacticalMap({
           onClick={handleToggleTheme}
           className="btn btn-icon cut-sm"
           style={{
+            width: '38px',
+            height: '38px',
+            minHeight: '38px',
+            padding: 0,
             background: mapTheme === 'satellite' ? 'rgba(0, 245, 212, 0.2)' : 'rgba(20, 14, 38, 0.92)',
             border: mapTheme === 'satellite' ? '1px solid var(--hunter-color)' : '1px solid var(--line)',
             color: mapTheme === 'satellite' ? 'var(--hunter-color)' : 'var(--p-300)',
@@ -644,6 +654,10 @@ export default function TacticalMap({
           onClick={handleZoomIn}
           className="btn btn-icon cut-sm"
           style={{
+            width: '38px',
+            height: '38px',
+            minHeight: '38px',
+            padding: 0,
             background: 'rgba(20, 14, 38, 0.92)',
             border: '1px solid var(--line)',
             color: 'var(--p-300)',
@@ -659,6 +673,10 @@ export default function TacticalMap({
           onClick={handleZoomOut}
           className="btn btn-icon cut-sm"
           style={{
+            width: '38px',
+            height: '38px',
+            minHeight: '38px',
+            padding: 0,
             background: 'rgba(20, 14, 38, 0.92)',
             border: '1px solid var(--line)',
             color: 'var(--p-300)',
@@ -675,19 +693,19 @@ export default function TacticalMap({
         <div
           style={{
             position: 'absolute',
-            top: '90px',
+            bottom: '210px',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(255, 183, 3, 0.2)',
+            background: 'rgba(20, 14, 38, 0.88)',
             border: '1px solid var(--warning-color)',
             color: 'var(--warning-color)',
-            padding: '4px 12px',
-            fontSize: '11px',
+            padding: '3px 10px',
+            fontSize: '10px',
             fontFamily: 'var(--font-mono)',
             fontWeight: 700,
-            letterSpacing: '0.05em',
+            letterSpacing: '0.04em',
             pointerEvents: 'none',
-            zIndex: 500,
+            zIndex: 450,
             backdropFilter: 'blur(6px)',
             whiteSpace: 'nowrap'
           }}

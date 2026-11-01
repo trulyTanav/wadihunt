@@ -154,17 +154,17 @@ export default function JoinCreateScreen({
         <div style={{
           background: 'var(--ink)',
           border: '1px solid var(--line)',
-          padding: '14px 16px',
+          padding: '12px 14px',
           display: 'flex',
           alignItems: 'center',
-          gap: '14px'
+          gap: '12px'
         }} className="cut">
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
             <AvatarBadge
               avatar={playerAvatar}
               name={playerName}
               role="HUNTER"
-              size={56}
+              size={54}
               onClick={() => setAvatarModalOpen(true)}
             />
             <button
@@ -191,11 +191,11 @@ export default function JoinCreateScreen({
             </button>
           </div>
 
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.08em', display: 'block', marginBottom: '4px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <label style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>
               CODENAME & PHOTO ICON
             </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '6px', minWidth: 0 }}>
               <input
                 type="text"
                 value={playerName}
@@ -205,11 +205,12 @@ export default function JoinCreateScreen({
                 className="cut-sm"
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   background: 'var(--black)',
                   border: '1px solid var(--line)',
                   color: '#fff',
-                  padding: '10px 12px',
-                  fontSize: '15px',
+                  padding: '9px 10px',
+                  fontSize: '14px',
                   fontFamily: 'var(--font-head)',
                   fontWeight: 700,
                   outline: 'none'
@@ -218,7 +219,7 @@ export default function JoinCreateScreen({
               <button
                 onClick={() => setAvatarModalOpen(true)}
                 className="btn btn-ghost cut-sm"
-                style={{ minHeight: '40px', padding: '0 12px', fontSize: '12px' }}
+                style={{ minHeight: '38px', padding: '0 10px', fontSize: '11px', flexShrink: 0 }}
                 title="Change Photo / Icon"
               >
                 ICON
@@ -228,26 +229,26 @@ export default function JoinCreateScreen({
         </div>
 
         {/* Action Choice: Create vs Join */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
           {/* Create Button */}
           <button
             onClick={handleCreate}
             className="btn btn-primary cut-lg"
-            style={{ width: '100%', minHeight: '54px', fontSize: '16px' }}
+            style={{ width: '100%', minHeight: '52px', fontSize: '15px' }}
           >
-            <Play size={20} fill="#fff" />
+            <Play size={18} fill="#fff" />
             CREATE A NEW HUNT (HOST)
           </button>
 
           {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '2px 0' }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--line)' }} />
-            <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>OR JOIN WITH CODE</span>
+            <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>OR JOIN WITH CODE</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--line)' }} />
           </div>
 
           {/* Join Form */}
-          <form onSubmit={handleJoin} style={{ display: 'flex', gap: '10px' }}>
+          <form onSubmit={handleJoin} style={{ display: 'flex', gap: '8px', minWidth: 0 }}>
             <input
               type="text"
               value={roomCodeInput}
@@ -255,16 +256,17 @@ export default function JoinCreateScreen({
                 setRoomCodeInput(e.target.value.toUpperCase());
                 setErrorMsg('');
               }}
-              placeholder="CODE (e.g. WADI)"
+              placeholder="CODE (E.G. WADI)"
               maxLength={6}
               className="cut-sm"
               style={{
                 flex: 1,
+                minWidth: 0,
                 background: 'var(--ink)',
                 border: errorMsg ? '1px solid var(--danger-color)' : '1px solid var(--line)',
                 color: '#fff',
-                padding: '14px 16px',
-                fontSize: '16px',
+                padding: '12px 14px',
+                fontSize: '15px',
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 700,
                 letterSpacing: '0.1em',
@@ -276,9 +278,9 @@ export default function JoinCreateScreen({
             <button
               type="submit"
               className="btn btn-white cut-sm"
-              style={{ minHeight: '52px', padding: '0 24px' }}
+              style={{ minHeight: '48px', padding: '0 18px', flexShrink: 0 }}
             >
-              JOIN <ArrowRight size={18} />
+              JOIN <ArrowRight size={16} />
             </button>
           </form>
 
@@ -294,22 +296,23 @@ export default function JoinCreateScreen({
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '8px',
-        padding: '14px 0',
+        gap: '6px',
+        padding: '12px 0',
         borderTop: '1px solid var(--line)',
-        textAlign: 'center'
+        textAlign: 'center',
+        overflow: 'hidden'
       }}>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          <strong style={{ color: '#fff', display: 'block' }}>2 to 50+</strong>
+          <strong style={{ color: '#fff', display: 'block', fontSize: '12px' }}>2 to 50+</strong>
           Any Player Count
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          <strong style={{ color: '#fff', display: 'block' }}>X vs Y</strong>
+          <strong style={{ color: '#fff', display: 'block', fontSize: '12px' }}>X vs Y</strong>
           Custom Roles
         </div>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          <strong style={{ color: '#fff', display: 'block' }}>GPS Geofence</strong>
-          Shrinking Storm Zone
+          <strong style={{ color: '#fff', display: 'block', fontSize: '12px' }}>GPS Storm</strong>
+          Shrinking Zone
         </div>
       </div>
 

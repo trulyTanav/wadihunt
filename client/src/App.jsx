@@ -376,10 +376,9 @@ export default function App() {
   };
 
   const handleHunterTagRunner = (shadowId) => {
-    if (!shadowId) return;
     socketService.emit('hunter_tag_runner', { shadowId }, (res) => {
       if (!res.success && res.error) {
-        alert(res.error);
+        console.warn('Tag notice:', res.error);
       }
     });
   };
@@ -419,7 +418,7 @@ export default function App() {
   const currentPlayer = roomState?.players?.find((p) => p.id === socketService.getSocket()?.id);
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0B0914' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', background: '#0B0914' }}>
       {/* ── SCREEN 1: JOIN / CREATE LOBBY ──────────────────── */}
       {!roomState && (
         <JoinCreateScreen

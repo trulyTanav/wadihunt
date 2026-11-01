@@ -62,18 +62,49 @@ export default function TacticalHUD({
     haptics.tick();
   };
 
+  // Local real-time calculation of closest alive runner for Gateboys
+  const aliveShadows = (roomState?.players || []).filter(
+    (p) => p.role === 'SHADOW' && p.status === 'ALIVE' && p.lat != null
+  );
+
+  let localClosestShadow = null;
+  let localClosestDist = Infinity;
+  let localBearing = 0;
+
+  if (isHunter && myPosition?.lat != null && myPosition?.lng != null) {
+    for (const s of aliveShadows) {
+      const dLat = (s.lat - myPosition.lat) * 111111;
+      const dLng = (s.lng - myPosition.lng) * 111111 * Math.cos((myPosition.lat * Math.PI) / 180);
+      const d = Math.hypot(dLat, dLng);
+      if (d < localClosestDist) {
+        localClosestDist = d;
+        localClosestShadow = s;
+        const brng = (Math.atan2(dLng, dLat) * 180) / Math.PI;
+        localBearing = (brng + 360) % 360;
+      }
+    }
+  }
+
+  const effectiveShadow = localClosestShadow || (hunterTelemetry?.nearestShadowId ? roomState?.players?.find(p => p.id === hunterTelemetry.nearestShadowId) : null);
+  const tagThreshold = roomState?.settings?.tagDistance || 15;
+  const isCloseLocally = localClosestDist <= tagThreshold;
+  const canTag = isHunter && (Boolean(hunterTelemetry?.canTag) || isCloseLocally);
+
+  const displayDist = (localClosestDist !== Infinity && !isNaN(localClosestDist))
+    ? Math.round(localClosestDist)
+    : (hunterTelemetry?.nearestDistance ?? null);
+
   // Bearing needle rotation relative to player's heading
   const targetBearing = isHunter 
-    ? (hunterTelemetry?.nearestBearing ?? 0)
+    ? (localClosestShadow ? localBearing : (hunterTelemetry?.nearestBearing ?? 0))
     : (shadowTelemetry?.nearestHunterBearing ?? 0);
   
   const relativeAngle = (targetBearing - (myPosition?.heading || 0) + 360) % 360;
 
   const targetDist = isHunter
-    ? hunterTelemetry?.nearestDistance
+    ? displayDist
     : shadowTelemetry?.nearestHunterDistance;
 
-  const canTag = isHunter && hunterTelemetry?.canTag;
   const inDanger = isShadow && shadowTelemetry?.inDanger;
   const inCriticalDanger = isShadow && shadowTelemetry?.inCriticalDanger;
 
@@ -470,16 +501,16 @@ export default function TacticalHUD({
         gap: '10px',
         pointerEvents: 'auto'
       }}>
-        {/* Virtual D-Pad for Simulation Mode */}
+        {/* Virtual D-Pad for Simulation Mode (Compact & responsive) */}
         {isSimulated && (
           <div style={{
             alignSelf: 'center',
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 44px)',
-            gridTemplateRows: 'repeat(2, 44px)',
-            gap: '6px',
-            background: 'rgba(11, 9, 20, 0.9)',
-            padding: '8px',
+            gridTemplateColumns: 'repeat(3, 40px)',
+            gridTemplateRows: 'repeat(2, 40px)',
+            gap: '5px',
+            background: 'rgba(11, 9, 20, 0.92)',
+            padding: '6px',
             border: '1px solid var(--warning-color)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
           }} className="cut">
@@ -487,74 +518,85 @@ export default function TacticalHUD({
             <button
               onClick={() => onMoveSimulated(10, 0)}
               className="btn btn-icon cut-sm"
-              style={{ background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
+              style={{ width: '40px', height: '40px', minHeight: '40px', padding: 0, background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
               title="Move North"
             >
-              <ArrowUp size={20} />
+              <ArrowUp size={18} />
             </button>
             <div></div>
 
             <button
               onClick={() => onMoveSimulated(10, 270)}
               className="btn btn-icon cut-sm"
-              style={{ background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
+              style={{ width: '40px', height: '40px', minHeight: '40px', padding: 0, background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
               title="Move West"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
             <button
               onClick={() => onMoveSimulated(10, 180)}
               className="btn btn-icon cut-sm"
-              style={{ background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
+              style={{ width: '40px', height: '40px', minHeight: '40px', padding: 0, background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
               title="Move South"
             >
-              <ArrowDown size={20} />
+              <ArrowDown size={18} />
             </button>
             <button
               onClick={() => onMoveSimulated(10, 90)}
               className="btn btn-icon cut-sm"
-              style={{ background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
+              style={{ width: '40px', height: '40px', minHeight: '40px', padding: 0, background: 'var(--ink-2)', color: 'var(--p-300)', border: '1px solid var(--line)' }}
               title="Move East"
             >
-              <ArrowRight size={20} />
+              <ArrowRight size={18} />
             </button>
           </div>
         )}
 
         {/* Action Buttons: Hunter Tag or Runner Confession */}
         {isActive && isAlive && (
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
             {isHunter ? (
               <button
-                onClick={() => onTagRunner(hunterTelemetry?.nearestShadowId)}
+                onClick={() => {
+                  sound.playTag();
+                  haptics.tagImpact();
+                  onTagRunner(effectiveShadow?.id || hunterTelemetry?.nearestShadowId);
+                }}
                 className={`btn cut-lg ${canTag ? 'btn-danger pulse-animation' : 'btn-ghost'}`}
                 style={{
                   width: '100%',
-                  maxWidth: '380px',
+                  maxWidth: '420px',
                   minHeight: '54px',
-                  fontSize: '16px',
+                  fontSize: '15px',
                   opacity: canTag ? 1 : 0.65,
-                  cursor: canTag ? 'pointer' : 'not-allowed'
+                  cursor: canTag ? 'pointer' : 'not-allowed',
+                  boxShadow: canTag ? '0 0 25px rgba(255, 42, 85, 0.75)' : 'none'
                 }}
                 disabled={!canTag}
               >
                 <Target size={20} />
-                {canTag ? `TAG RUNNER (${targetDist}m - IN RANGE!)` : `TAG RUNNER (GET WITHIN 12m · CURRENT: ${targetDist ?? '?'}m)`}
+                {canTag 
+                  ? `TAG ${effectiveShadow?.name ? effectiveShadow.name.toUpperCase() : 'RUNNER'} (${displayDist}m - IN RANGE!)` 
+                  : `TAG RUNNER (GET WITHIN ${tagThreshold}m · CURRENT: ${displayDist ?? '?'}m)`}
               </button>
             ) : (
               <button
                 onClick={() => setConfirmTagModal(true)}
-                className="btn btn-white cut-lg"
+                className="btn cut-lg"
                 style={{
                   width: '100%',
-                  maxWidth: '380px',
+                  maxWidth: '420px',
                   minHeight: '52px',
-                  fontSize: '16px',
-                  letterSpacing: '0.04em'
+                  fontSize: '15px',
+                  letterSpacing: '0.04em',
+                  background: 'rgba(255, 42, 85, 0.16)',
+                  border: '1.5px solid var(--danger-color)',
+                  color: '#fff',
+                  boxShadow: '0 4px 18px rgba(255, 42, 85, 0.25)'
                 }}
               >
                 <Skull size={20} color="var(--danger-color)" />
-                I GOT TAGGED
+                I GOT TAGGED (HONOR SYSTEM)
               </button>
             )}
           </div>

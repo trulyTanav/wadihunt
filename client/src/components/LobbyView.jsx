@@ -85,7 +85,7 @@ export default function LobbyView({
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      padding: 'max(16px, env(safe-area-inset-top)) 20px max(16px, env(safe-area-inset-bottom)) 20px',
+      padding: 'max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)) 16px',
       overflowY: 'auto'
     }}>
       {/* ── TOP HEADER & ROOM CODE ───────────────────────── */}
@@ -627,8 +627,19 @@ export default function LobbyView({
         </div>
       </div>
 
-      {/* ── BOTTOM LAUNCH BAR ────────────────────────────── */}
-      <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {/* ── BOTTOM LAUNCH BAR (Sticky so it is always accessible on mobile) ─ */}
+      <div style={{
+        position: 'sticky',
+        bottom: 0,
+        zIndex: 20,
+        marginTop: '16px',
+        paddingTop: '12px',
+        paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
+        background: 'linear-gradient(180deg, rgba(11, 9, 20, 0) 0%, rgba(11, 9, 20, 0.95) 25%, #0B0914 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}>
         {isHost ? (
           <button
             onClick={() => {
@@ -639,22 +650,23 @@ export default function LobbyView({
             className="btn btn-primary cut-lg"
             style={{
               width: '100%',
-              minHeight: '56px',
-              fontSize: '18px',
-              letterSpacing: '0.04em'
+              minHeight: '54px',
+              fontSize: '16px',
+              letterSpacing: '0.04em',
+              boxShadow: '0 4px 20px rgba(124, 77, 255, 0.4)'
             }}
             disabled={hunters.length === 0 || shadows.length === 0}
           >
-            <Play size={20} fill="#fff" />
+            <Play size={18} fill="#fff" />
             START THE HUNT ({totalCount} PLAYERS)
           </button>
         ) : (
           <div style={{
             background: 'var(--ink)',
             border: '1px solid var(--line)',
-            padding: '14px',
+            padding: '12px 14px',
             textAlign: 'center',
-            fontSize: '14px',
+            fontSize: '13px',
             color: 'var(--text-muted)'
           }} className="cut">
             Waiting for host <strong style={{ color: '#fff' }}>{players.find(p => p.isHost)?.name || 'Host'}</strong> to start the hunt...

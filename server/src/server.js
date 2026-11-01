@@ -545,6 +545,33 @@ class GameRoom {
     }
   }
 
+  updateSingleHunterTelemetry(h) {
+    if (!h || h.lat == null) return;
+    const shadows = Array.from(this.players.values()).filter(p => p.role === 'SHADOW' && p.status === 'ALIVE' && p.lat != null);
+    let closestShadow = null;
+    let closestDist = Infinity;
+    let closestBearing = 0;
+
+    for (const s of shadows) {
+      const d = getDistanceMeters(h.lat, h.lng, s.lat, s.lng);
+      if (d < closestDist) {
+        closestDist = d;
+        closestShadow = s;
+        closestBearing = getBearing(h.lat, h.lng, s.lat, s.lng);
+      }
+    }
+
+    io.to(h.id).emit('hunter_telemetry', {
+      nearestDistance: closestDist === Infinity ? null : Math.round(closestDist),
+      nearestBearing: closestBearing,
+      nearestShadowId: closestShadow ? closestShadow.id : null,
+      nearestShadowName: closestShadow ? closestShadow.name : null,
+      nearestShadowLat: closestShadow ? closestShadow.lat : null,
+      nearestShadowLng: closestShadow ? closestShadow.lng : null,
+      canTag: closestDist <= (this.settings.tagDistance || 15)
+    });
+  }
+
   // Real-time zero-delay proximity calculation for a moving player
   checkProximityForPlayer(movedPlayer) {
     if (this.state !== 'ACTIVE' || movedPlayer.lat == null) return;
@@ -553,37 +580,19 @@ class GameRoom {
     const shadows = Array.from(this.players.values()).filter(p => p.role === 'SHADOW' && p.status === 'ALIVE' && p.lat != null);
 
     if (isHunter) {
-      let closestShadow = null;
-      let closestDist = Infinity;
-      let closestBearing = 0;
+      this.updateSingleHunterTelemetry(movedPlayer);
 
       for (const s of shadows) {
         const d = getDistanceMeters(movedPlayer.lat, movedPlayer.lng, s.lat, s.lng);
-        if (d < closestDist) {
-          closestDist = d;
-          closestShadow = s;
-          closestBearing = getBearing(movedPlayer.lat, movedPlayer.lng, s.lat, s.lng);
+        if (d < 40) {
+          const bearingToH = getBearing(s.lat, s.lng, movedPlayer.lat, movedPlayer.lng);
+          io.to(s.id).emit('shadow_telemetry', {
+            nearestHunterDistance: Math.round(d),
+            nearestHunterBearing: bearingToH,
+            inDanger: d < 30,
+            inCriticalDanger: d < 15
+          });
         }
-      }
-
-      io.to(movedPlayer.id).emit('hunter_telemetry', {
-        nearestDistance: closestDist === Infinity ? null : Math.round(closestDist),
-        nearestBearing: closestBearing,
-        nearestShadowId: closestShadow ? closestShadow.id : null,
-        nearestShadowName: closestShadow ? closestShadow.name : null,
-        nearestShadowLat: closestShadow ? closestShadow.lat : null,
-        nearestShadowLng: closestShadow ? closestShadow.lng : null,
-        canTag: closestDist <= this.settings.tagDistance
-      });
-
-      if (closestShadow) {
-        const bearingToH = (closestBearing + 180) % 360;
-        io.to(closestShadow.id).emit('shadow_telemetry', {
-          nearestHunterDistance: Math.round(closestDist),
-          nearestHunterBearing: bearingToH,
-          inDanger: closestDist < 30,
-          inCriticalDanger: closestDist < 15
-        });
       }
     } else {
       // movedPlayer is Shadow
@@ -607,14 +616,10 @@ class GameRoom {
         inCriticalDanger: closestHunterDist < 15
       });
 
+      // Crucial: Calculate the true closest shadow for this hunter among ALL shadows
+      // (prevents distant runners from overwriting a close runner's tag telemetry)
       if (closestHunter) {
-        const bearingFromH = (closestHunterBearing + 180) % 360;
-        io.to(closestHunter.id).emit('hunter_telemetry', {
-          nearestDistance: Math.round(closestHunterDist),
-          nearestBearing: bearingFromH,
-          nearestShadowId: movedPlayer.id,
-          canTag: closestHunterDist <= this.settings.tagDistance
-        });
+        this.updateSingleHunterTelemetry(closestHunter);
       }
     }
   }
@@ -832,20 +837,36 @@ io.on('connection', (socket) => {
   socket.on('hunter_tag_runner', ({ shadowId }, callback) => {
     if (!currentRoom) return;
     const hunter = currentRoom.players.get(playerId);
-    const shadow = currentRoom.players.get(shadowId);
-
-    if (!hunter || hunter.role !== 'HUNTER') {
+    if (!hunter || hunter.role !== 'HUNTER' || hunter.lat == null) {
       return callback && callback({ success: false, error: 'Only gateboys can tag runners.' });
     }
-    if (!shadow || shadow.role !== 'SHADOW') {
-      return callback && callback({ success: false, error: 'Target is not a runner.' });
+
+    let targetShadow = shadowId ? currentRoom.players.get(shadowId) : null;
+    if (!targetShadow || targetShadow.status !== 'ALIVE' || targetShadow.role !== 'SHADOW') {
+      // Find closest alive runner
+      let closest = null;
+      let minD = Infinity;
+      for (const p of currentRoom.players.values()) {
+        if (p.role === 'SHADOW' && p.status === 'ALIVE' && p.lat != null) {
+          const d = getDistanceMeters(hunter.lat, hunter.lng, p.lat, p.lng);
+          if (d < minD) {
+            minD = d;
+            closest = p;
+          }
+        }
+      }
+      targetShadow = closest;
     }
 
-    const dist = getDistanceMeters(hunter.lat, hunter.lng, shadow.lat, shadow.lng);
+    if (!targetShadow) {
+      return callback && callback({ success: false, error: 'No alive runner in range.' });
+    }
+
+    const dist = getDistanceMeters(hunter.lat, hunter.lng, targetShadow.lat, targetShadow.lng);
     // Allow up to 1.8x tag distance to account for GPS variance
-    if (dist <= currentRoom.settings.tagDistance * 1.8 || shadow.isBot) {
-      const tagged = currentRoom.tagRunner(shadowId, hunter.id);
-      if (callback) callback({ success: tagged, distance: Math.round(dist) });
+    if (dist <= currentRoom.settings.tagDistance * 1.8 || targetShadow.isBot) {
+      const tagged = currentRoom.tagRunner(targetShadow.id, hunter.id);
+      if (callback) callback({ success: tagged, distance: Math.round(dist), shadowName: targetShadow.name });
     } else {
       if (callback) callback({ success: false, error: `Too far! Distance is ${Math.round(dist)}m (must be within ${currentRoom.settings.tagDistance}m)` });
     }
