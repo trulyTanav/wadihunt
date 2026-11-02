@@ -1,5 +1,6 @@
 // Geolocation service with support for High-Accuracy Real GPS, Native Capacitor, and Simulation Mode
 import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 
 class GeoService {
   constructor() {
@@ -124,7 +125,6 @@ class GeoService {
     // 1. Try Native Capacitor Geolocation on Android/iOS
     if (Capacitor.isNativePlatform()) {
       try {
-        const { Geolocation } = await import('@capacitor/geolocation');
         const perm = await Geolocation.requestPermissions();
         if (perm.location === 'granted' || perm.coarseLocation === 'granted') {
           // Instant fix
@@ -238,10 +238,10 @@ class GeoService {
       this.watchId = null;
     }
     if (this.capacitorWatchId != null) {
-      import('@capacitor/geolocation').then(({ Geolocation }) => {
-        Geolocation.clearWatch({ id: this.capacitorWatchId });
-        this.capacitorWatchId = null;
-      }).catch(() => {});
+      try {
+        Geolocation.clearWatch({ id: this.capacitorWatchId }).catch(() => {});
+      } catch (e) {}
+      this.capacitorWatchId = null;
     }
     if (this.orientationListener != null && typeof window !== 'undefined') {
       window.removeEventListener('deviceorientation', this.orientationListener);

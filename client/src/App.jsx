@@ -3,6 +3,7 @@ import { socketService } from './services/socket';
 import { geoService } from './services/geolocation';
 import { sound } from './audio/soundFX';
 import { haptics } from './services/haptics';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 import JoinCreateScreen from './components/JoinCreateScreen';
 import LobbyView from './components/LobbyView';
@@ -15,10 +16,18 @@ import { voiceService } from './services/voiceService';
 
 export default function App() {
   const [playerName, setPlayerName] = useState(() => {
-    return localStorage.getItem('wadihunt_player_name') || `Gateboy-${Math.floor(Math.random() * 900 + 100)}`;
+    try {
+      return localStorage.getItem('wadihunt_player_name') || `Gateboy-${Math.floor(Math.random() * 900 + 100)}`;
+    } catch (e) {
+      return `Gateboy-${Math.floor(Math.random() * 900 + 100)}`;
+    }
   });
   const [playerAvatar, setPlayerAvatar] = useState(() => {
-    return localStorage.getItem('wadihunt_player_avatar') || 'wolf';
+    try {
+      return localStorage.getItem('wadihunt_player_avatar') || 'wolf';
+    } catch (e) {
+      return 'wolf';
+    }
   });
   const [isConnected, setIsConnected] = useState(false);
   const [roomState, setRoomState] = useState(null);
@@ -61,9 +70,7 @@ export default function App() {
   // Dismiss native splash screen as soon as React renders
   useEffect(() => {
     try {
-      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
-        SplashScreen.hide().catch(() => {});
-      }).catch(() => {});
+      SplashScreen.hide().catch(() => {});
     } catch (e) {}
   }, []);
 

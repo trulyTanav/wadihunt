@@ -11,8 +11,43 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <title>WadiHunt — Real-World GPS Manhunt</title>
-    <script type="module" src="./assets/index-rin2G7zH.js"></script>
-    <link rel="stylesheet" href="./assets/index-XXUcL4ys.css">
+    <script>
+      (function() {
+        window.__BOOT_ERRORS__ = [];
+        function recordError(msg) {
+          window.__BOOT_ERRORS__.push(msg);
+          var el = document.getElementById('boot-status');
+          if (el) {
+            el.innerHTML = '<span style="color:#FF2A55;word-break:break-all;font-size:11px;">BOOT FAULT: ' + msg + '</span>';
+          }
+        }
+        window.addEventListener('error', function(e) {
+          var msg = e.message || (e.error && e.error.message);
+          if (!msg && e.target && (e.target.src || e.target.href)) {
+            msg = 'Resource load failed: ' + (e.target.src || e.target.href);
+          }
+          recordError(msg || String(e));
+        }, true);
+        window.addEventListener('unhandledrejection', function(e) {
+          var reason = e.reason ? (e.reason.message || String(e.reason)) : 'Promise rejected';
+          recordError('Async Error: ' + reason);
+        });
+        setTimeout(function() {
+          if (!window.__TACTICAL_MOUNTED__) {
+            var el = document.getElementById('boot-status');
+            if (el) {
+              var loaded = window.__SCRIPT_LOADED__ ? 'Script Executed' : 'Script Pending';
+              var errText = window.__BOOT_ERRORS__.length > 0 ? ('<br/>Faults: ' + window.__BOOT_ERRORS__.join('; ')) : '';
+              el.innerHTML = '<span style="color:#FFB800;font-size:11px;">BOOT TIMEOUT (' + loaded + ')' + errText + '</span><br/><button onclick="window.location.reload()" style="margin-top:10px;padding:6px 14px;background:#7C4DFF;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:bold;cursor:pointer;">RETRY BOOT</button>';
+            }
+          }
+        }, 5000);
+      })();
+    </script>
+    <script type="module" src="./assets/index-GkudLppb.js"></script>
+    <link rel="stylesheet" href="./assets/index-BpfeXgWm.css">
+    <script type="module">import'data:text/javascript,if(!import.meta.resolve)throw Error("import.meta.resolve not supported")';import.meta.url;import("_").catch(()=>1);(async function*(){})().next();window.__vite_is_modern_browser=true</script>
+    <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
   </head>
   <body>
     <div id="root">
@@ -22,19 +57,8 @@
         <div id="boot-status" style="font-size:12px;color:#A39AC2;font-family:monospace;">INITIALIZING TACTICAL SYSTEM...</div>
       </div>
     </div>
-    <script>
-      window.addEventListener('error', function(e) {
-        var el = document.getElementById('boot-status');
-        if (el) {
-          el.innerHTML = '<span style="color:#FF2A55;word-break:break-all;font-size:11px;">BOOT ERROR: ' + (e.message || (e.error && e.error.message) || e.toString()) + '</span>';
-        }
-      });
-      window.addEventListener('unhandledrejection', function(e) {
-        var el = document.getElementById('boot-status');
-        if (el) {
-          el.innerHTML = '<span style="color:#FF2A55;word-break:break-all;font-size:11px;">PROMISE ERROR: ' + (e.reason && e.reason.message ? e.reason.message : e.reason) + '</span>';
-        }
-      });
-    </script>
+    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+    <script nomodule id="vite-legacy-polyfill" src="./assets/polyfills-legacy-1uBhbLRU.js"></script>
+    <script nomodule id="vite-legacy-entry" data-src="./assets/index-legacy-BLgvNo0E.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
   </body>
 </html>

@@ -73,10 +73,26 @@ class ErrorBoundary extends Component {
   }
 }
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-)
+window.__SCRIPT_LOADED__ = true;
+
+try {
+  const rootElement = document.getElementById('root');
+  if (rootElement) {
+    createRoot(rootElement).render(
+      <StrictMode>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </StrictMode>
+    );
+    window.__TACTICAL_MOUNTED__ = true;
+  } else {
+    console.error('Fatal: #root element missing');
+  }
+} catch (e) {
+  console.error('Fatal React Mount Error:', e);
+  const el = document.getElementById('boot-status');
+  if (el) {
+    el.innerHTML = '<span style="color:#FF2A55;word-break:break-all;">MOUNT ERROR: ' + (e.message || String(e)) + '</span>';
+  }
+}

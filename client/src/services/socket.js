@@ -8,21 +8,24 @@ class SocketService {
   }
 
   getSavedServerUrl() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem('wadihunt_server_url');
-      if (saved) return saved;
-      // Default to hostname of client (so phone accessing PC via IP connects to PC:3001)
-      const host = window.location.hostname || 'localhost';
-      return `http://${host}:3001`;
-    }
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = window.localStorage.getItem('wadihunt_server_url');
+        if (saved) return saved;
+        const host = window.location.hostname || 'localhost';
+        return `http://${host}:3001`;
+      }
+    } catch (e) {}
     return 'http://localhost:3001';
   }
 
   setServerUrl(url) {
     this.serverUrl = url;
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('wadihunt_server_url', url);
-    }
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('wadihunt_server_url', url);
+      }
+    } catch (e) {}
     if (this.socket) {
       this.socket.disconnect();
       this.connect();
