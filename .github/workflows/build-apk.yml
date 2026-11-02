@@ -42,6 +42,9 @@ jobs:
         run: |
           cd client
           npm run build
+          echo "Explicitly copying web assets into android assets folder..."
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
 
       - name: Make Gradlew Executable
         run: chmod +x client/android/gradlew
@@ -50,6 +53,16 @@ jobs:
         run: |
           cd client
           npx cap sync android || echo "Capacitor sync finished"
+          echo "Re-verifying assets in android assets folder..."
+          cp -r dist/* android/app/src/main/assets/public/
+
+      - name: Verify Android Assets
+        run: |
+          echo "=========================================="
+          echo "       VERIFYING PACKAGED ASSETS          "
+          echo "=========================================="
+          ls -la client/android/app/src/main/assets/public/
+          ls -la client/android/app/src/main/assets/public/assets/
 
       - name: Build Debug APK
         run: |
