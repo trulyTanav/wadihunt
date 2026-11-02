@@ -73,32 +73,35 @@ export default function JoinCreateScreen({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Connection status badge */}
-          <button
-            onClick={onOpenSettings}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px',
-              background: 'rgba(11, 9, 20, 0.8)',
-              border: isConnected ? '1px solid var(--line)' : '1px solid var(--danger-color)',
-              fontSize: '11px',
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer',
-              color: '#fff'
-            }}
-            className="cut-sm"
-            title="Click to check or configure server IP"
-          >
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: isConnected ? 'var(--runner-color)' : 'var(--danger-color)'
-            }} />
-            {isConnected ? 'ONLINE' : 'OFFLINE (TAP FOR IP)'}
-          </button>
+          {/* Connection status badge (only visible if server is inactive or disconnected) */}
+          {!isConnected && (
+            <button
+              onClick={onOpenSettings}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 10px',
+                background: 'rgba(255, 42, 85, 0.15)',
+                border: '1px solid var(--danger-color)',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono)',
+                cursor: 'pointer',
+                color: '#fff'
+              }}
+              className="cut-sm"
+              title="Server disconnected or sleeping. Tap to configure server IP"
+            >
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: 'var(--danger-color)',
+                boxShadow: '0 0 8px var(--danger-color)'
+              }} />
+              OFFLINE (TAP FOR IP)
+            </button>
+          )}
 
           <button
             onClick={onOpenSettings}

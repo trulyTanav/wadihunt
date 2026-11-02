@@ -11,19 +11,21 @@ class SocketService {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const saved = window.localStorage.getItem('wadihunt_server_url');
-        if (saved) return saved;
-        const host = window.location.hostname || 'localhost';
-        return `http://${host}:3001`;
+        // If a valid custom server is saved (and not obsolete localhost/3001), use it
+        if (saved && !saved.includes('localhost') && !saved.includes(':3001')) {
+          return saved.replace(/\/+$/, '');
+        }
       }
     } catch (e) {}
-    return 'http://localhost:3001';
+    return 'https://wadihunt.onrender.com';
   }
 
   setServerUrl(url) {
-    this.serverUrl = url;
+    const cleanUrl = (url || '').trim().replace(/\/+$/, '') || 'https://wadihunt.onrender.com';
+    this.serverUrl = cleanUrl;
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('wadihunt_server_url', url);
+        window.localStorage.setItem('wadihunt_server_url', cleanUrl);
       }
     } catch (e) {}
     if (this.socket) {
