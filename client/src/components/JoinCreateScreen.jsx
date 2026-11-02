@@ -43,12 +43,15 @@ export default function JoinCreateScreen({
   return (
     <div style={{
       width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      padding: 'max(20px, env(safe-area-inset-top)) 24px max(20px, env(safe-area-inset-bottom)) 24px',
-      overflowY: 'auto'
+      padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) 16px',
+      overflowY: 'auto',
+      overflowX: 'hidden'
     }}>
       {/* Top Navbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

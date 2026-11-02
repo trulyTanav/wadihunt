@@ -74,11 +74,13 @@ function createDefaultSettings() {
 }
 
 class GameRoom {
-  constructor(code, hostId, hostName) {
+  constructor(code, hostId, hostName, hostUserToken = null) {
     this.code = code;
     this.hostId = hostId;
+    this.hostUserToken = hostUserToken;
     this.state = 'LOBBY'; // 'LOBBY' | 'HEAD_START' | 'ACTIVE' | 'GAME_OVER'
     this.players = new Map(); // id -> player object
+    this.disconnectTimers = new Map(); // userToken/id -> timer
     this.settings = createDefaultSettings();
     this.timer = null;
     this.elapsedSeconds = 0;
@@ -95,38 +97,76 @@ class GameRoom {
     this.matchStartTime = null;
   }
 
-  addPlayer(id, name, isHost = false, avatar = null) {
-    // If player already exists (reconnection), keep their role
-    const existing = this.players.get(id);
+  addPlayer(id, name, isHost = false, avatar = null, userToken = null) {
+    // If player already exists by userToken or id (reconnection / tab resume)
+    let existing = this.players.get(id);
+    if (!existing && userToken) {
+      existing = Array.from(this.players.values()).find(p => p.userToken === userToken);
+      if (existing) {
+        this.players.delete(existing.id);
+        existing.id = id;
+      }
+    }
+
+    if (existing) {
+      existing.id = id;
+      existing.isOnline = true;
+      if (name) existing.name = name.slice(0, 16);
+      if (avatar) existing.avatar = avatar;
+      if (userToken) existing.userToken = userToken;
+      // Preserve host status for this userToken
+      if ((this.hostUserToken && existing.userToken === this.hostUserToken) || existing.isHost) {
+        this.hostId = id;
+        this.hostUserToken = existing.userToken;
+        existing.isHost = true;
+      }
+      this.players.set(id, existing);
+      return existing;
+    }
+
+    const token = userToken || `usr_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const shouldBeHost = Boolean(isHost || (this.hostUserToken && token === this.hostUserToken));
+
     const player = {
       id,
-      name: name.slice(0, 16),
-      avatar: avatar || (existing ? existing.avatar : 'wolf'),
-      role: existing ? existing.role : 'SHADOW', // 'HUNTER' | 'SHADOW'
-      status: 'ALIVE', // 'ALIVE' | 'CAUGHT'
+      userToken: token,
+      name: (name || 'Operative').slice(0, 16),
+      avatar: avatar || 'wolf',
+      role: 'SHADOW',
+      status: 'ALIVE',
       lat: null,
       lng: null,
       heading: 0,
       accuracy: 0,
       speed: 0,
       lastUpdate: Date.now(),
-      isHost,
+      isHost: shouldBeHost,
       isBot: false,
       isOnline: true,
       tagsCount: 0
     };
+
+    if (player.isHost) {
+      this.hostId = id;
+      this.hostUserToken = token;
+    }
+
     this.players.set(id, player);
     return player;
   }
 
   removePlayer(id) {
     const p = this.players.get(id);
+    if (!p) return null;
     this.players.delete(id);
     if (this.hostId === id && this.players.size > 0) {
-      // Reassign host to next real player
-      const nextHost = Array.from(this.players.values()).find(pl => !pl.isBot) || Array.from(this.players.values())[0];
+      // Reassign host to next real online player, or any real player
+      const nextHost = Array.from(this.players.values()).find(pl => !pl.isBot && pl.isOnline) ||
+                       Array.from(this.players.values()).find(pl => !pl.isBot) ||
+                       Array.from(this.players.values())[0];
       if (nextHost) {
         this.hostId = nextHost.id;
+        this.hostUserToken = nextHost.userToken;
         nextHost.isHost = true;
       }
     }
@@ -646,6 +686,7 @@ class GameRoom {
       voicePeers: Array.from((this.voicePeers || new Map()).values()),
       players: Array.from(this.players.values()).map(p => ({
         id: p.id,
+        userToken: p.userToken,
         name: p.name,
         avatar: p.avatar || 'wolf',
         role: p.role,
@@ -669,15 +710,16 @@ io.on('connection', (socket) => {
   let playerId = socket.id;
 
   // Create room
-  socket.on('create_room', ({ playerName, avatar, settings, coords }, callback) => {
+  socket.on('create_room', ({ playerName, avatar, settings, coords, userToken }, callback) => {
     const code = generateRoomCode();
-    const room = new GameRoom(code, playerId, playerName || 'Host');
+    const token = userToken || `usr_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const room = new GameRoom(code, playerId, playerName || 'Host', token);
     if (settings) Object.assign(room.settings, settings);
     if (coords && coords.lat != null && coords.lng != null) {
       room.settings.zoneCenter = { lat: coords.lat, lng: coords.lng };
     }
 
-    const hostPlayer = room.addPlayer(playerId, playerName || 'Host', true, avatar);
+    const hostPlayer = room.addPlayer(playerId, playerName || 'Host', true, avatar, token);
     if (coords && coords.lat != null && coords.lng != null) {
       hostPlayer.lat = coords.lat;
       hostPlayer.lng = coords.lng;
@@ -691,14 +733,21 @@ io.on('connection', (socket) => {
   });
 
   // Join room
-  socket.on('join_room', ({ roomCode, playerName, avatar, coords }, callback) => {
+  socket.on('join_room', ({ roomCode, playerName, avatar, coords, userToken }, callback) => {
     const code = (roomCode || '').toUpperCase().trim();
     const room = rooms.get(code);
     if (!room) {
       return callback({ success: false, error: 'Room not found! Check the room code.' });
     }
 
-    const player = room.addPlayer(playerId, playerName || `Player ${room.players.size + 1}`, false, avatar);
+    // Cancel pending disconnect grace timer for this userToken
+    if (userToken && room.disconnectTimers && room.disconnectTimers.has(userToken)) {
+      clearTimeout(room.disconnectTimers.get(userToken));
+      room.disconnectTimers.delete(userToken);
+    }
+
+    const isHostCandidate = Boolean(room.hostUserToken && userToken && userToken === room.hostUserToken);
+    const player = room.addPlayer(playerId, playerName || `Player ${room.players.size + 1}`, isHostCandidate, avatar, userToken);
     if (coords && coords.lat != null && coords.lng != null) {
       player.lat = coords.lat;
       player.lng = coords.lng;
@@ -1002,7 +1051,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Disconnect
+  // Disconnect with robust 90-second grace period for outdoor/background play
   socket.on('disconnect', () => {
     if (currentRoom) {
       if (currentRoom.voicePeers.has(playerId)) {
@@ -1011,35 +1060,34 @@ io.on('connection', (socket) => {
       }
       const player = currentRoom.players.get(playerId);
       if (player && !player.isBot) {
-        if (currentRoom.state === 'ACTIVE' || currentRoom.state === 'HEAD_START') {
-          player.isOnline = false;
-          currentRoom.addFeedMessage(`${player.name} connection unstable (reconnecting...)`);
-          currentRoom.broadcastState();
+        player.isOnline = false;
+        currentRoom.addFeedMessage(`${player.name} paused (reconnecting...)`);
+        currentRoom.broadcastState();
 
-          // 45-second outdoor grace period
-          setTimeout(() => {
-            const currentP = currentRoom?.players.get(playerId);
-            if (currentP && currentP.isOnline === false) {
-              currentRoom.removePlayer(playerId);
-              currentRoom.addFeedMessage(`${player.name} left the room`);
-              if (currentRoom.players.size === 0) {
-                if (currentRoom.timer) clearInterval(currentRoom.timer);
-                rooms.delete(currentRoom.code);
-              } else {
-                currentRoom.broadcastState();
-              }
-            }
-          }, 45000);
-        } else {
-          currentRoom.removePlayer(playerId);
-          currentRoom.addFeedMessage(`${player.name} left the room`);
-          if (currentRoom.players.size === 0) {
-            if (currentRoom.timer) clearInterval(currentRoom.timer);
-            rooms.delete(currentRoom.code);
-          } else {
-            currentRoom.broadcastState();
-          }
+        const graceKey = player.userToken || player.id;
+        if (currentRoom.disconnectTimers.has(graceKey)) {
+          clearTimeout(currentRoom.disconnectTimers.get(graceKey));
         }
+
+        // 90-second grace timer for mobile screen lock, backgrounding, or cell handover
+        const timer = setTimeout(() => {
+          currentRoom.disconnectTimers.delete(graceKey);
+          const currentP = Array.from(currentRoom.players.values()).find(
+            p => (p.userToken && p.userToken === graceKey) || p.id === playerId
+          );
+          if (currentP && currentP.isOnline === false) {
+            currentRoom.removePlayer(currentP.id);
+            currentRoom.addFeedMessage(`${currentP.name} left the room`);
+            if (currentRoom.players.size === 0) {
+              if (currentRoom.timer) clearInterval(currentRoom.timer);
+              rooms.delete(currentRoom.code);
+            } else {
+              currentRoom.broadcastState();
+            }
+          }
+        }, 90000);
+
+        currentRoom.disconnectTimers.set(graceKey, timer);
       }
     }
   });

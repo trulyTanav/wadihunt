@@ -81,15 +81,18 @@ export default function LobbyView({
   return (
     <div style={{
       width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      padding: 'max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom)) 16px',
-      overflowY: 'auto'
+      padding: 'max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom)) 14px',
+      overflowY: 'auto',
+      overflowX: 'hidden'
     }}>
       {/* ── TOP HEADER & ROOM CODE ───────────────────────── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ 
@@ -306,9 +309,11 @@ export default function LobbyView({
         {/* Role Quick Selector for current player */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '12px',
-          marginTop: '4px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: '10px',
+          marginTop: '4px',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           <button
             onClick={() => {
@@ -318,23 +323,25 @@ export default function LobbyView({
             }}
             className="cut"
             style={{
-              padding: '16px',
+              padding: '12px 10px',
               border: currentPlayer?.role === 'HUNTER' ? '2px solid var(--hunter-color)' : '1px solid var(--line)',
-              background: currentPlayer?.role === 'HUNTER' ? 'rgba(0, 245, 212, 0.15)' : 'var(--ink)',
+              background: currentPlayer?.role === 'HUNTER' ? 'rgba(255, 42, 85, 0.16)' : 'var(--ink)',
               color: '#fff',
               textAlign: 'left',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              minWidth: 0,
+              boxSizing: 'border-box'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--hunter-color)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>
-              <Shield size={16} /> I am a Gateboy
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--hunter-color)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>
+              <Shield size={14} /> I am a Gateboy
             </div>
-            <div style={{ fontFamily: 'var(--font-head)', fontSize: '20px', fontWeight: 800, marginTop: '6px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '17px', fontWeight: 800, marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Track & Tag
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Follow pings, close distance, eliminate runners.
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>
+              Follow pings, eliminate runners.
             </div>
           </button>
 
@@ -346,23 +353,25 @@ export default function LobbyView({
             }}
             className="cut"
             style={{
-              padding: '16px',
+              padding: '12px 10px',
               border: currentPlayer?.role === 'SHADOW' ? '2px solid var(--shadow-color)' : '1px solid var(--line)',
               background: currentPlayer?.role === 'SHADOW' ? 'rgba(0, 245, 212, 0.15)' : 'var(--ink)',
               color: '#fff',
               textAlign: 'left',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              minWidth: 0,
+              boxSizing: 'border-box'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--shadow-color)', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>
-              <Ghost size={16} /> I am a Runner
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--shadow-color)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>
+              <Ghost size={14} /> I am a Runner
             </div>
-            <div style={{ fontFamily: 'var(--font-head)', fontSize: '20px', fontWeight: 800, marginTop: '6px' }}>
+            <div style={{ fontFamily: 'var(--font-head)', fontSize: '17px', fontWeight: 800, marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Hide & Survive
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Stay inside the shrinking safe zone, outlast clock.
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>
+              Stay inside safe zone, outlast clock.
             </div>
           </button>
         </div>
@@ -372,24 +381,28 @@ export default function LobbyView({
           <div style={{
             background: 'var(--ink)',
             border: '1px solid var(--line)',
-            padding: '16px',
+            padding: '14px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px'
+            gap: '10px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            overflow: 'hidden'
           }} className="cut">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--p-300)' }}>
-                <Sparkles size={14} /> HOST DISTRIBUTION TOOL
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--p-300)' }}>
+                <Sparkles size={13} /> HOST DISTRIBUTION TOOL
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Configure any <strong style={{ color: 'var(--hunter-color)' }}>{hunterSliderValue} Gateboys</strong> vs <strong style={{ color: 'var(--shadow-color)' }}>{Math.max(0, totalCount - hunterSliderValue)} Runners</strong>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--hunter-color)' }}>{hunterSliderValue} Gateboys</strong> vs <strong style={{ color: 'var(--shadow-color)' }}>{Math.max(0, totalCount - hunterSliderValue)} Runners</strong>
               </div>
             </div>
 
             {/* Slider for X Gateboys */}
             {totalCount > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--hunter-color)', minWidth: '70px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)', color: 'var(--hunter-color)', minWidth: '65px' }}>
                   {hunterSliderValue} Gateboys
                 </span>
                 <input
@@ -398,7 +411,7 @@ export default function LobbyView({
                   max={Math.max(1, totalCount - 1)}
                   value={hunterSliderValue}
                   onChange={(e) => setHunterSliderValue(parseInt(e.target.value, 10))}
-                  style={{ flex: 1, accentColor: 'var(--p-500)', cursor: 'pointer' }}
+                  style={{ flex: '1 1 110px', accentColor: 'var(--p-500)', cursor: 'pointer', minWidth: '80px' }}
                 />
                 <button
                   onClick={() => {
@@ -407,7 +420,7 @@ export default function LobbyView({
                     haptics.tick();
                   }}
                   className="btn btn-primary cut-sm"
-                  style={{ minHeight: '34px', fontSize: '12px' }}
+                  style={{ minHeight: '32px', fontSize: '11px', whiteSpace: 'nowrap' }}
                 >
                   APPLY {hunterSliderValue}v{totalCount - hunterSliderValue}
                 </button>
@@ -415,7 +428,7 @@ export default function LobbyView({
             )}
 
             {/* Fast Presets */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               <button
                 onClick={() => {
                   setHunterSliderValue(1);
@@ -476,9 +489,9 @@ export default function LobbyView({
         )}
 
         {/* ── TEAMS ROSTER (HUNTERS vs SHADOWS) ─────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div className="lobby-teams-grid">
           {/* Gateboys Column */}
-          <div style={{ background: 'var(--ink)', border: '1px solid var(--line)', padding: '12px' }} className="cut">
+          <div style={{ background: 'var(--ink)', border: '1px solid var(--line)', padding: '12px', minWidth: 0, boxSizing: 'border-box' }} className="cut">
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -499,14 +512,16 @@ export default function LobbyView({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '6px 8px',
-                    background: 'rgba(0, 245, 212, 0.08)',
+                    background: 'rgba(255, 42, 85, 0.08)',
                     borderRadius: '4px',
-                    fontSize: '13px'
+                    fontSize: '13px',
+                    minWidth: 0,
+                    gap: '6px'
                   }}
                 >
-                  <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
                     <AvatarBadge avatar={p.avatar} name={p.name} role="HUNTER" size={24} border={false} />
-                    <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name} {p.id === currentPlayer?.id ? '(YOU)' : ''} {p.isBot ? '🤖' : ''} {p.isHost ? '👑' : ''}
                     </span>
                     <span
@@ -514,6 +529,7 @@ export default function LobbyView({
                         width: '7px',
                         height: '7px',
                         borderRadius: '50%',
+                        flexShrink: 0,
                         background: p.isOnline === false ? 'var(--warning-color)' : p.lat != null ? 'var(--hunter-color)' : 'rgba(255,255,255,0.25)',
                         boxShadow: p.lat != null ? '0 0 6px var(--hunter-color)' : 'none',
                         display: 'inline-block'
@@ -522,11 +538,11 @@ export default function LobbyView({
                     />
                   </span>
                   {isHost && (
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                       <button
                         onClick={() => onHostSetPlayerRole(p.id, 'SHADOW')}
                         className="btn btn-ghost cut-sm"
-                        style={{ minHeight: '22px', padding: '0 6px', fontSize: '10px' }}
+                        style={{ minHeight: '24px', padding: '0 6px', fontSize: '10px' }}
                         title="Move to Runners"
                       >
                         → Runner
@@ -534,7 +550,7 @@ export default function LobbyView({
                       {p.isBot && (
                         <button
                           onClick={() => onKickPlayer(p.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer' }}
+                          style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '0 2px' }}
                         >
                           <Trash2 size={12} />
                         </button>
@@ -552,7 +568,7 @@ export default function LobbyView({
           </div>
 
           {/* Runners Column */}
-          <div style={{ background: 'var(--ink)', border: '1px solid var(--line)', padding: '12px' }} className="cut">
+          <div style={{ background: 'var(--ink)', border: '1px solid var(--line)', padding: '12px', minWidth: 0, boxSizing: 'border-box' }} className="cut">
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -575,12 +591,14 @@ export default function LobbyView({
                     padding: '6px 8px',
                     background: 'rgba(0, 245, 212, 0.08)',
                     borderRadius: '4px',
-                    fontSize: '13px'
+                    fontSize: '13px',
+                    minWidth: 0,
+                    gap: '6px'
                   }}
                 >
-                  <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
                     <AvatarBadge avatar={p.avatar} name={p.name} role="SHADOW" size={24} border={false} />
-                    <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name} {p.id === currentPlayer?.id ? '(YOU)' : ''} {p.isBot ? '🤖' : ''} {p.isHost ? '👑' : ''}
                     </span>
                     <span
@@ -588,6 +606,7 @@ export default function LobbyView({
                         width: '7px',
                         height: '7px',
                         borderRadius: '50%',
+                        flexShrink: 0,
                         background: p.isOnline === false ? 'var(--warning-color)' : p.lat != null ? 'var(--shadow-color)' : 'rgba(255,255,255,0.25)',
                         boxShadow: p.lat != null ? '0 0 6px var(--shadow-color)' : 'none',
                         display: 'inline-block'
@@ -596,11 +615,11 @@ export default function LobbyView({
                     />
                   </span>
                   {isHost && (
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                       <button
                         onClick={() => onHostSetPlayerRole(p.id, 'HUNTER')}
                         className="btn btn-ghost cut-sm"
-                        style={{ minHeight: '22px', padding: '0 6px', fontSize: '10px' }}
+                        style={{ minHeight: '24px', padding: '0 6px', fontSize: '10px' }}
                         title="Move to Gateboys"
                       >
                         → Gateboy
@@ -608,7 +627,7 @@ export default function LobbyView({
                       {p.isBot && (
                         <button
                           onClick={() => onKickPlayer(p.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer' }}
+                          style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '0 2px' }}
                         >
                           <Trash2 size={12} />
                         </button>

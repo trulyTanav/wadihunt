@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { socketService } from './services/socket';
 import { geoService } from './services/geolocation';
 import { sound } from './audio/soundFX';
@@ -14,7 +14,21 @@ import SettingsModal from './components/SettingsModal';
 import ChatAndVoiceModal from './components/ChatAndVoiceModal';
 import { voiceService } from './services/voiceService';
 
+function getUserToken() {
+  try {
+    let token = localStorage.getItem('wadihunt_user_token');
+    if (!token) {
+      token = `usr_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      localStorage.setItem('wadihunt_user_token', token);
+    }
+    return token;
+  } catch (e) {
+    return `usr_${Date.now()}`;
+  }
+}
+
 export default function App() {
+  const userToken = useMemo(() => getUserToken(), []);
   const [playerName, setPlayerName] = useState(() => {
     try {
       return localStorage.getItem('wadihunt_player_name') || `Gateboy-${Math.floor(Math.random() * 900 + 100)}`;
@@ -330,9 +344,12 @@ export default function App() {
 
   const handleCreateRoom = () => {
     const coords = (myPosition?.lat != null) ? { lat: myPosition.lat, lng: myPosition.lng } : null;
-    socketService.emit('create_room', { playerName, avatar: playerAvatar, coords }, (res) => {
-      if (res.success) {
+    socketService.emit('create_room', { playerName, avatar: playerAvatar, coords, userToken }, (res) => {
+      if (res && res.success) {
         setRoomState(res.state);
+        try {
+          localStorage.setItem('wadihunt_active_room', res.roomCode);
+        } catch (e) {}
         // Center the initial safe zone around host's current GPS location
         if (coords) {
           socketService.emit('update_settings', {
@@ -345,13 +362,67 @@ export default function App() {
 
   const handleJoinRoom = (roomCode, callback) => {
     const coords = (myPosition?.lat != null) ? { lat: myPosition.lat, lng: myPosition.lng } : null;
-    socketService.emit('join_room', { roomCode, playerName, avatar: playerAvatar, coords }, (res) => {
-      if (res.success) {
+    socketService.emit('join_room', { roomCode, playerName, avatar: playerAvatar, coords, userToken }, (res) => {
+      if (res && res.success) {
         setRoomState(res.state);
+        try {
+          localStorage.setItem('wadihunt_active_room', res.roomCode);
+        } catch (e) {}
       }
       if (callback) callback(res);
     });
   };
+
+  // Seamless Android tab-out / background resume and session recovery
+  useEffect(() => {
+    const attemptRejoin = () => {
+      let activeRoom = null;
+      try {
+        activeRoom = localStorage.getItem('wadihunt_active_room');
+      } catch (e) {}
+
+      if (!activeRoom) return;
+
+      const socket = socketService.connect();
+      const coords = (myPosition?.lat != null) ? { lat: myPosition.lat, lng: myPosition.lng } : null;
+
+      socket.emit('join_room', {
+        roomCode: activeRoom,
+        playerName,
+        avatar: playerAvatar,
+        coords,
+        userToken
+      }, (res) => {
+        if (res && res.success) {
+          setRoomState(res.state);
+        } else {
+          try {
+            localStorage.removeItem('wadihunt_active_room');
+          } catch (e) {}
+        }
+      });
+    };
+
+    // Rejoin on initial load if we had an active room
+    attemptRejoin();
+
+    // Rejoin on tab focus / app resume
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        attemptRejoin();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', attemptRejoin);
+    window.addEventListener('online', attemptRejoin);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', attemptRejoin);
+      window.removeEventListener('online', attemptRejoin);
+    };
+  }, [playerName, playerAvatar, userToken, myPosition?.lat, myPosition?.lng]);
 
   const handleSetRole = (role) => {
     socketService.emit('set_role', { role });
@@ -431,7 +502,9 @@ export default function App() {
     socketService.emit('send_chat', { text, channel });
   };
 
-  const currentPlayer = roomState?.players?.find((p) => p.id === socketService.getSocket()?.id);
+  const currentPlayer = roomState?.players?.find(
+    (p) => (p.userToken && p.userToken === userToken) || p.id === socketService.getSocket()?.id
+  );
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', background: '#0B0914' }}>

@@ -16,6 +16,8 @@ class GeoService {
     this.lastHeading = 0;
     this.lastHeadingNotifyTime = 0;
     this.lastLocationTime = 0;
+    this.lastGpsHeading = null;
+    this.lastGpsHeadingTime = 0;
 
     // Default starting point (will be immediately overridden by real GPS or custom center)
     this.currentPosition = {
@@ -99,6 +101,11 @@ class GeoService {
           heading = (brng + 360) % 360;
         }
       }
+    }
+
+    if (heading != null) {
+      this.lastGpsHeading = Math.round(heading);
+      this.lastGpsHeadingTime = now;
     }
 
     this.lastLat = lat;
@@ -206,29 +213,77 @@ class GeoService {
         DeviceOrientationEvent.requestPermission().catch(() => {});
       }
 
+      this.orientationEventName = ('ondeviceorientationabsolute' in window)
+        ? 'deviceorientationabsolute'
+        : 'deviceorientation';
+
       this.orientationListener = (e) => {
-        let heading = null;
-        if (e.webkitCompassHeading != null) {
-          heading = e.webkitCompassHeading;
-        } else if (e.alpha != null) {
-          heading = (360 - e.alpha) % 360;
+        if (this.isSimulated) return;
+
+        const now = Date.now();
+        // Priority 1: When moving at walking/running speed, GPS trajectory is physically ground truth.
+        // Do not allow orientation sensor to overwrite GPS heading while moving.
+        if (this.currentPosition.speed >= 0.8 && (now - this.lastGpsHeadingTime) < 3000) {
+          return;
         }
 
-        if (heading != null && !this.isSimulated) {
-          const rounded = Math.round(heading);
-          const now = Date.now();
-          // Rate limit orientation updates: only update if changed by >= 6 deg and >= 300ms passed to preserve mobile FPS
-          const diff = Math.abs(rounded - this.lastHeading);
-          if (diff >= 6 && now - this.lastHeadingNotifyTime >= 300) {
-            this.lastHeading = rounded;
+        let heading = null;
+        if (e.webkitCompassHeading != null) {
+          // iOS Safari native compass heading
+          heading = e.webkitCompassHeading;
+        } else if (e.alpha != null) {
+          // Compensation for device screen rotation (portrait vs landscape)
+          const screenAngle = (window.screen && window.screen.orientation && window.screen.orientation.angle != null)
+            ? window.screen.orientation.angle
+            : (typeof window.orientation === 'number' ? window.orientation : 0);
+
+          // If held upright in hand (pitch > 15 deg), use full 3D Euler tilt compensation
+          if (e.beta != null && e.gamma != null && Math.abs(e.beta) > 15) {
+            const aRad = (e.alpha * Math.PI) / 180;
+            const bRad = (e.beta * Math.PI) / 180;
+            const gRad = (e.gamma * Math.PI) / 180;
+
+            const cA = Math.cos(aRad), sA = Math.sin(aRad);
+            const cB = Math.cos(bRad), sB = Math.sin(bRad);
+            const cG = Math.cos(gRad), sG = Math.sin(gRad);
+
+            const rA = -cA * sG - sA * sB * cG;
+            const rB = -sA * sG + cA * sB * cG;
+
+            let deg = Math.atan2(rA, rB) * (180 / Math.PI);
+            if (deg < 0) deg += 360;
+            heading = (deg + screenAngle) % 360;
+          } else {
+            // Lying flat
+            heading = (360 - e.alpha + screenAngle) % 360;
+          }
+
+          // On Android WebView / Capacitor apps, the hardware coordinate frame is inverted by 180°
+          const isAndroid = Capacitor.isNativePlatform() || /Android/i.test(navigator.userAgent || '');
+          if (isAndroid) {
+            heading = (heading + 180) % 360;
+          }
+        }
+
+        if (heading != null) {
+          const rawTarget = Math.round(heading);
+          const current = this.currentPosition.heading || 0;
+          
+          // Shortest angular distance interpolation to eliminate jitter and 180-degree jump glitch
+          let diff = (rawTarget - current + 540) % 360 - 180;
+          
+          // Update if moved by >= 4 deg and rate limit to 100ms
+          if (Math.abs(diff) >= 4 && (now - this.lastHeadingNotifyTime >= 100)) {
+            const smoothed = Math.round((current + diff * 0.5 + 360) % 360);
+            this.lastHeading = smoothed;
             this.lastHeadingNotifyTime = now;
-            this.currentPosition.heading = rounded;
+            this.currentPosition.heading = smoothed;
             this.notify();
           }
         }
       };
 
-      window.addEventListener('deviceorientation', this.orientationListener, true);
+      window.addEventListener(this.orientationEventName, this.orientationListener, true);
     }
   }
 
@@ -244,7 +299,8 @@ class GeoService {
       this.capacitorWatchId = null;
     }
     if (this.orientationListener != null && typeof window !== 'undefined') {
-      window.removeEventListener('deviceorientation', this.orientationListener);
+      const eventName = this.orientationEventName || 'deviceorientation';
+      window.removeEventListener(eventName, this.orientationListener, true);
       this.orientationListener = null;
     }
   }
